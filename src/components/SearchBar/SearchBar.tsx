@@ -1,4 +1,3 @@
-import type { FormEvent } from 'react';
 import styles from './SearchBar.module.css';
 import toast from 'react-hot-toast';
 
@@ -7,10 +6,7 @@ export interface SearchBarProps {
 }
 
 export default function SearchBar({ onSubmit }: SearchBarProps) {
-  // Form Actions підхід: читаємо значення через FormData з події submit
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  async function searchAction(formData: FormData) {
     const query = String(formData.get('query') || '').trim();
 
     if (!query) {
@@ -19,8 +15,7 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
     }
 
     onSubmit(query);
-    e.currentTarget.reset();
-  };
+  }
 
   return (
     <header className={styles.header}>
@@ -34,7 +29,8 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
           Powered by TMDB
         </a>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        {/* ✅ Використовуємо action замість onSubmit */}
+        <form className={styles.form} action={searchAction}>
           <input
             className={styles.input}
             type="text"

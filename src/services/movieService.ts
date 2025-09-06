@@ -1,66 +1,42 @@
-import axios, { type AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { FetchMoviesResponse, MovieDetails } from '../types/movie';
 
-import type { Movie } from '../types/movie';
+const BASE_URL = 'https://api.themoviedb.org/3';
 
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
+    'Content-Type': 'application/json;charset=utf-8',
+  },
+});
 
-export interface FetchMoviesParams {
-  query: string;
-  page?: number;
-}
-
-export interface FetchMoviesResponse {
-  page: number;
-  results: Movie[];
-  total_pages: number;
-  total_results: number;
-}
-
-/**
- * Пошук фільмів за ключовим словом.
- * Токен береться з process.env.VITE_TMDB_TOKEN (Vite: import.meta.env).
- */
-export async function fetchMovies({
-  query,
-  page = 1,
-}: FetchMoviesParams): Promise<FetchMoviesResponse> {
-  if (!query.trim()) {
-    return { page: 1, results: [], total_pages: 0, total_results: 0 };
-  }
-
-  const token = import.meta.env.VITE_TMDB_TOKEN as string | undefined;
-  if (!token) {
-    throw new Error(
-      'TMDB token is missing. Please set VITE_TMDB_TOKEN in your environment.'
-    );
-  }
-
-  const config = {
-    params: {
-      query,
-      include_adult: false,
-      language: 'en-US',
-      page,
-    },
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  } as const;
-
-  const resp: AxiosResponse<FetchMoviesResponse> = await axios.get(
-    `${TMDB_BASE_URL}/search/movie`,
-    config
+// Пошук фільмів за запитом
+export async function fetchMovies(query: string): Promise<FetchMoviesResponse> {
+  const { data } = await api.get<FetchMoviesResponse>(
+    `/search/movie?query=${encodeURIComponent(query)}`
   );
-
-  return resp.data;
+  return data;
 }
 
-/** Хелпер для побудови повної URL до зображення */
+// Трендові фільми дня
+export async function fetchTrending(): Promise<FetchMoviesResponse> {
+  const { data } = await api.get<FetchMoviesResponse>(`/trending/movie/day`);
+  return data;
+}
+
+// Деталі конкретного фільму
+export async function fetchMovieDetails(
+  movieId: number
+): Promise<MovieDetails> {
+  const { data } = await api.get<MovieDetails>(`/movie/${movieId}`);
+  return data;
+}
+
+// URL постера чи бекдропу
 export function imageUrl(
   path: string | null,
-  size: 'w500' | 'original' = 'w500'
-): string | undefined {
-  if (!path) return undefined;
-  const base = 'https://image.tmdb.org/t/p/';
-  return `${base}${size}${path}`;
+  size: 'w200' | 'w500' | 'original' = 'w200'
+): string | null {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
 }

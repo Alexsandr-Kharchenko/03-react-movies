@@ -4,6 +4,7 @@ import SearchBar from '../SearchBar/SearchBar';
 import MovieGrid from '../MovieGrid/MovieGrid';
 import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import MovieModal from '../MovieModal/MovieModal';
 import { fetchMovies } from '../../services/movieService';
 import type { Movie } from '../../types/movie';
 
@@ -19,7 +20,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const data = await fetchMovies({ query, page: 1 });
+      const data = await fetchMovies(query); // ✅ рядок query
       if (!data.results.length) {
         toast.error('No movies found for your request.');
       }
@@ -41,32 +42,12 @@ export default function App() {
       {loading && <Loader />}
       {!loading && error && <ErrorMessage />}
       {!loading && !error && (
-        <MovieGrid movies={movies} onSelect={m => setSelected(m)} />
+        <MovieGrid movies={movies} onSelect={setSelected} />
       )}
 
-      {}
-      {}
       {selected && (
-        <div style={{ display: 'contents' }}>
-          {}
-          {}
-        </div>
+        <MovieModal movie={selected} onClose={() => setSelected(null)} />
       )}
-      {}
-      {}
-      {}
-      {}
-      <MovieModalContainer movie={selected} onClose={() => setSelected(null)} />
     </>
   );
-}
-
-// Окремий контейнер, щоб уникнути умовного імпорту зверху та мати чистий App
-import MovieModal from '../MovieModal/MovieModal';
-interface MovieModalContainerProps {
-  movie: Movie | null;
-  onClose: () => void;
-}
-function MovieModalContainer({ movie, onClose }: MovieModalContainerProps) {
-  return <MovieModal movie={movie} onClose={onClose} />;
 }
